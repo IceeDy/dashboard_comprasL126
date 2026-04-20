@@ -114,7 +114,8 @@ numeric_cols = [
 ]
 for col in numeric_cols:
     if col in df.columns:
-        df.loc[:, col] = df[col].apply(to_float)
+        # Atribuicao direta evita erro de dtype em pandas recentes ao trocar string -> float
+        df[col] = df[col].apply(to_float)
 
 # Cria coluna unificada 'qtd' usada por todo o script:
 # prioridade: "Necessidade Compra" > "compras" > soma("Necessidade Prof.","Necessidade Aluno") > 0
@@ -147,7 +148,7 @@ if search_term:
 # Assegura que as colunas numéricas também existam no filtered_df e cria 'qtd' nele
 for col in numeric_cols:
     if col in filtered_df.columns:
-        filtered_df.loc[:, col] = filtered_df[col].apply(to_float)
+        filtered_df[col] = filtered_df[col].apply(to_float)
 filtered_df["qtd"] = filtered_df.apply(compute_qtd_row, axis=1)
 
 # Recalcula campos financeiros com base em 'qtd' e dados novos
