@@ -135,7 +135,7 @@ df["qtd"] = df.apply(compute_qtd_row, axis=1)
 # Aplica filtros
 filtered_df = df[df["Categoria"].isin(selected_category)].copy()
 # evita fillna em Series de dtype object — já substitui valores vazios e garante string
-filtered_df.loc[:, "Faturado?"] = filtered_df["Faturado?"].replace("", "Sem Info").astype(str)
+filtered_df["Faturado?"] = filtered_df["Faturado?"].replace("", "Sem Info").astype(str)
 filtered_df = filtered_df[filtered_df['Faturado?'].isin(selected_faturamento)].copy()
 
 # também manter a coluna normalizada no filtered_df
@@ -152,17 +152,17 @@ for col in numeric_cols:
 filtered_df["qtd"] = filtered_df.apply(compute_qtd_row, axis=1)
 
 # Recalcula campos financeiros com base em 'qtd' e dados novos
-filtered_df.loc[:, "Valor Previsto"] = filtered_df["custo"] * filtered_df["qtd"]
-filtered_df.loc[:, "Valor Total Compra"] = filtered_df["Melhor Preço"] * filtered_df["qtd"]
-filtered_df.loc[:, "Valor Total Negociado"] = filtered_df["Melhor Preço"] * filtered_df["Qtd Negociada"].fillna(0)
-filtered_df.loc[:, "Valor Total Necessidade"] = filtered_df["Menor Preço"] * filtered_df["qtd"]
-filtered_df.loc[:, "Valor Total Histórico"] = filtered_df["custo"] * filtered_df["Estoque"].fillna(0)
-filtered_df.loc[:, "Overstock"] = filtered_df["Valor Total Negociado"].fillna(0) - filtered_df["Valor Total Compra"].fillna(0)
+filtered_df["Valor Previsto"] = filtered_df["custo"] * filtered_df["qtd"]
+filtered_df["Valor Total Compra"] = filtered_df["Melhor Preço"] * filtered_df["qtd"]
+filtered_df["Valor Total Negociado"] = filtered_df["Melhor Preço"] * filtered_df["Qtd Negociada"].fillna(0)
+filtered_df["Valor Total Necessidade"] = filtered_df["Menor Preço"] * filtered_df["qtd"]
+filtered_df["Valor Total Histórico"] = filtered_df["custo"] * filtered_df["Estoque"].fillna(0)
+filtered_df["Overstock"] = filtered_df["Valor Total Negociado"].fillna(0) - filtered_df["Valor Total Compra"].fillna(0)
 
 # Garante tipos float pós-cálculo
 for col in ["Valor Previsto","Valor Total Compra","Valor Total Negociado","Valor Total Necessidade","Valor Total Histórico","Overstock"]:
     if col in filtered_df.columns:
-        filtered_df.loc[:, col] = filtered_df[col].apply(to_float)
+        filtered_df[col] = filtered_df[col].apply(to_float)
 
 total_negociado = filtered_df["Valor Total Negociado"].sum()
 total_compra = filtered_df["Valor Total Compra"].sum()
@@ -293,7 +293,7 @@ if status_col in filtered_df.columns:
     # Entrega dos itens: base e critérios adaptados aos status: "Em Orçamento", "Aguardando", "Entregue"
     # usar filtered_df para que a métrica responda aos filtros (categoria, faturamento, busca, etc.)
     df_status_base = filtered_df[filtered_df["status_norm"].isin(["em orçamento", "aguardando", "entregue"])].copy()
-    df_status_base.loc[:, "Qtd Armazenada"] = df_status_base["Qtd Armazenada"].apply(to_float)
+    df_status_base["Qtd Armazenada"] = df_status_base["Qtd Armazenada"].apply(to_float)
 
     # Entregue quando status == 'entregue' OU quando há Qtd Armazenada > 0
     mask_entregue = (df_status_base["status_norm"] == "entregue") | (df_status_base["Qtd Armazenada"] > 0)
@@ -312,10 +312,10 @@ df_status_pendentes = df[df["status_norm"].isin(pendente_norm)].copy()
 if df_status_pendentes.empty:
     st.info("Nenhum material com status 'Aguardando' ou 'Em Orçamento' encontrado.")
 else:
-    df_status_pendentes.loc[:, "Qtd Negociada"] = df_status_pendentes["Qtd Negociada"].apply(to_float)
-    df_status_pendentes.loc[:, "Melhor Preço"] = df_status_pendentes["Melhor Preço"].apply(to_float)
-    df_status_pendentes.loc[:, "Valor Estimado"] = df_status_pendentes["Qtd Negociada"] * df_status_pendentes["Melhor Preço"]
-    df_status_pendentes.loc[:, "Valor Estimado"] = df_status_pendentes["Valor Estimado"].apply(format_brl)
+    df_status_pendentes["Qtd Negociada"] = df_status_pendentes["Qtd Negociada"].apply(to_float)
+    df_status_pendentes["Melhor Preço"] = df_status_pendentes["Melhor Preço"].apply(to_float)
+    df_status_pendentes["Valor Estimado"] = df_status_pendentes["Qtd Negociada"] * df_status_pendentes["Melhor Preço"]
+    df_status_pendentes["Valor Estimado"] = df_status_pendentes["Valor Estimado"].apply(format_brl)
     st.dataframe(
         df_status_pendentes[[
             "Categoria", "Insumo", status_col, "Qtd Negociada", "Medida", "Melhor Preço", "Valor Estimado", "Nota Fiscal", "Faturado?"
@@ -405,7 +405,7 @@ with tab1:
 with tab2:
     st.subheader("📋 Lista Detalhada de Insumos")
     if not filtered_df.empty:
-        filtered_df.loc[:, "Overstock"] = filtered_df["Valor Total Negociado"] - filtered_df["Valor Total Compra"]
+        filtered_df["Overstock"] = filtered_df["Valor Total Negociado"] - filtered_df["Valor Total Compra"]
         editable_cols = [
             "Categoria", "Código", "Insumo", "Necessidade Prof.", "Necessidade Aluno", "qtd", "Necessidade Compra",
             "Medida", "Estoque", "saldo pós compra", "Menor Preço", "custo", "Custo Estoque", "total Previsto",
@@ -511,12 +511,12 @@ with tab3:
 
 # Status de entrega detalhado (usa 'qtd' para exibição)
 st.markdown("### 📦 Status de Entrega dos Itens (OK)")
-df.loc[:, "Qtd Armazenada"] = df["Qtd Armazenada"].apply(to_float)
-df.loc[:, "Situação"] = df["Situação"].astype(str)
+df["Qtd Armazenada"] = df["Qtd Armazenada"].apply(to_float)
+df["Situação"] = df["Situação"].astype(str)
 
 # Na seção de exibição detalhada (Entregues / Aguardando) usamos status_norm para decidir
 df_ok = df[df["status_norm"].isin(["entregue", "aguardando", "em orçamento"])].copy()
-df_ok.loc[:, "Status Entrega"] = df_ok.apply(
+df_ok["Status Entrega"] = df_ok.apply(
     lambda r: "Entregue" if (r["status_norm"] == "entregue" or to_float(r.get("Qtd Armazenada", 0)) > 0) else "Aguardando Entrega",
     axis=1
 )
